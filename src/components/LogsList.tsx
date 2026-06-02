@@ -345,7 +345,7 @@ const styles = {
   },
   theadRow: {
     borderBottom: '1px solid var(--border-glass)',
-    background: 'rgba(17, 24, 39, 0.3)',
+    background: '#0f172a', // Solid background prevents text bleed-through when scrolling
     position: 'sticky' as const,
     top: 0,
     zIndex: 10
