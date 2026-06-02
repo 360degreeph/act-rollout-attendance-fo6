@@ -4,6 +4,7 @@ import { QRScanner } from './components/QRScanner';
 import { LogsList } from './components/LogsList';
 import { Dashboard } from './components/Dashboard';
 import { Settings } from './components/Settings';
+import { Login } from './components/Login';
 import { SheetsService, type Student, type AttendanceLog } from './services/sheetsService';
 import { Sparkles, Calendar, UserCheck, Camera } from 'lucide-react';
 
@@ -17,6 +18,9 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
   const [liveTime, setLiveTime] = useState(new Date());
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('act_auth_token') === 'verified';
+  });
 
   // Live Clock
   useEffect(() => {
@@ -139,6 +143,15 @@ function App() {
       second: '2-digit'
     });
   };
+
+  const handleLoginSuccess = () => {
+    localStorage.setItem('act_auth_token', 'verified');
+    setIsLoggedIn(true);
+  };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLoginSuccess} />;
+  }
 
   return (
     <div className="app-container">

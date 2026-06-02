@@ -116,6 +116,13 @@ export const QRScanner: React.FC<QRScannerProps> = ({
   }, [isOpen, selectedCameraId]);
 
   const isCooldownRef = useRef<boolean>(false);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleToastClick = () => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setActiveToast(prev => prev ? { ...prev, show: false } : null);
+    isCooldownRef.current = false;
+  };
 
   const startScanning = async () => {
     if (!selectedCameraId) return;
@@ -191,15 +198,12 @@ export const QRScanner: React.FC<QRScannerProps> = ({
         office: log.office
       });
 
-      // Clear toast after 0.5 seconds
-      setTimeout(() => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      
+      toastTimeoutRef.current = setTimeout(() => {
         setActiveToast((prev) => (prev && prev.studentId === log.studentId ? { ...prev, show: false } : prev));
-      }, 500);
-
-      // Automatically resume accepting scans in 0.5 seconds so next staff member can scan!
-      setTimeout(() => {
         isCooldownRef.current = false;
-      }, 500);
+      }, 1000);
 
     } catch (err) {
       console.error('Scan error:', err);
@@ -290,13 +294,17 @@ export const QRScanner: React.FC<QRScannerProps> = ({
         </div>
 
         {/* Popup Success Toast Overlay (renders inside modal screen center) */}
-        <div style={{
-          ...styles.toastOverlay,
-          opacity: activeToast?.show ? 1 : 0,
-          pointerEvents: activeToast?.show ? 'auto' : 'none',
-          transform: activeToast?.show ? 'scale(1)' : 'scale(0.95)'
-        }}>
-          {activeToast && (
+          <div 
+            style={{
+              ...styles.toastOverlay,
+              opacity: activeToast?.show ? 1 : 0,
+              pointerEvents: activeToast?.show ? 'auto' : 'none',
+              transform: activeToast?.show ? 'scale(1)' : 'scale(0.95)',
+              cursor: 'pointer'
+            }}
+            onClick={handleToastClick}
+            title="Click or tap to dismiss"
+          >{activeToast && (
             <div style={{
               ...styles.toastCard,
               borderColor: activeToast.status === 'IN' ? 'var(--color-success)' : 'var(--color-warning)',
