@@ -14,6 +14,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onQuickScan
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [targetDate, setTargetDate] = useState(() => new Date().toISOString().split('T')[0]);
   
   // Move stats calculation below filter
 
@@ -44,7 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const filteredLogs = logs.filter(l => filteredIds.has(l.studentId));
 
   // Compute dynamic dashboard metrics based on the filtered subset!
-  const stats = SheetsService.getDashboardStats(filteredRoster, filteredLogs);
+  const stats = SheetsService.getDashboardStats(filteredRoster, filteredLogs, targetDate);
 
   // Find max value in hourly/weekly stats for scaling the SVG/CSS bar height
   const maxHourlyCount = Math.max(...stats.hourlyStats.map(s => s.count), 1);
@@ -69,13 +70,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Metric 2 */}
         <div className="glass-card metric-card" style={styles.metricCard}>
           <div style={styles.metricHeader}>
-            <span style={styles.metricTitle}>Total Scans Today</span>
+            <span style={styles.metricTitle}>Total Scans (Filtered Date)</span>
             <div style={{ ...styles.metricIconWrapper, background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
               <Clock size={20} color="#3b82f6" />
             </div>
           </div>
           <div className="metric-value">{stats.scansToday}</div>
-          <span style={styles.metricSubtitle}>IN / OUT scans logged today</span>
+          <span style={styles.metricSubtitle}>IN / OUT scans logged on {new Date(targetDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
         </div>
 
         {/* Metric 3 */}
@@ -107,7 +108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="layout-grid" style={{ marginBottom: '2rem' }}>
         {/* Hourly Check-ins bar chart */}
         <div className="glass-card">
-          <h3 style={styles.chartTitle}>Today's Traffic by Hour</h3>
+          <h3 style={styles.chartTitle}>{targetDate === new Date().toISOString().split('T')[0] ? "Today's" : new Date(targetDate).toLocaleDateString([], { month: 'short', day: 'numeric' })} Traffic by Hour</h3>
           <p style={styles.chartSubtitle}>Scan counts hourly throughout school session</p>
           <div className="chart-bar-container">
             {stats.hourlyStats.map((item) => {
@@ -158,15 +159,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <p style={styles.rosterSubtitle}>Search Kalahi-CIDSS Staff, review their live state, or trigger a manual scan</p>
           </div>
           
-          <div style={styles.searchContainer}>
-            <Search size={16} style={styles.searchIcon} />
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+            <div style={styles.searchContainer}>
+              <Search size={16} style={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search by staff name, ID, or office..."
+                className="form-input"
+                style={styles.searchInput}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
             <input
-              type="text"
-              placeholder="Search by staff name, ID, or office..."
+              type="date"
               className="form-input"
-              style={styles.searchInput}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', width: 'auto', minWidth: '140px', cursor: 'pointer' }}
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              title="Filter dashboard statistics by date"
             />
           </div>
         </div>

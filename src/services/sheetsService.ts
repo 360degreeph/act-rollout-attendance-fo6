@@ -391,26 +391,28 @@ export class SheetsService {
   }
 
   // Compute Dashboard Statistics based on logs
-  static getDashboardStats(students: Student[], logs: AttendanceLog[]): DashboardStats {
-    const today = new Date();
-    today.setHours(0,0,0,0);
+  static getDashboardStats(students: Student[], logs: AttendanceLog[], targetDateStr?: string): DashboardStats {
+    const targetDate = targetDateStr ? new Date(targetDateStr) : new Date();
+    targetDate.setHours(0,0,0,0);
     
     // Total registered students
     const totalStudents = students.length || 1;
 
-    // Filter logs for today
+    // Filter logs for targetDate
     const todayLogs = logs.filter(log => {
       const logDate = new Date(log.timestamp);
       logDate.setHours(0,0,0,0);
-      return logDate.getTime() === today.getTime();
+      return logDate.getTime() === targetDate.getTime();
     });
 
     // Scans today
     const scansToday = todayLogs.length;
 
-    // Checked-in now: For each student, check their latest log status
+    // Checked-in now: For each student, check their latest log status up to targetDate
     const latestStatusMap = new Map<string, 'IN' | 'OUT'>();
-    logs.forEach(log => {
+    const logsUpToTarget = logs.filter(log => new Date(log.timestamp).getTime() < targetDate.getTime() + 86400000);
+    
+    logsUpToTarget.forEach(log => {
       if (!latestStatusMap.has(log.studentId)) {
         latestStatusMap.set(log.studentId, log.status);
       }
@@ -440,10 +442,10 @@ export class SheetsService {
       return { hour: h, count };
     });
 
-    // Compute Weekly Stats (Last 7 Days)
+    // Compute Weekly Stats (Last 7 Days ending on targetDate)
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const weeklyCounts = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date();
+      const d = new Date(targetDate);
       d.setDate(d.getDate() - (6 - i));
       d.setHours(0,0,0,0);
       
