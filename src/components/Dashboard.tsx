@@ -27,7 +27,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     
     // Sort descending by date (logs are already sorted latest first, but safety check)
     const latestLog = studentLogs[0];
-    const time = new Date(latestLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = new Date(latestLog.timestamp).toLocaleTimeString([], { 
+      timeZone: 'Asia/Manila',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
     return { status: latestLog.status, time };
   };
 
@@ -76,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <div className="metric-value">{stats.scansToday}</div>
-          <span style={styles.metricSubtitle}>IN / OUT scans logged on {new Date(targetDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+          <span style={styles.metricSubtitle}>IN / OUT scans logged on {new Date(targetDate).toLocaleDateString([], { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })}</span>
         </div>
 
         {/* Metric 3 */}
@@ -108,8 +112,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="layout-grid" style={{ marginBottom: '2rem' }}>
         {/* Hourly Check-ins bar chart */}
         <div className="glass-card">
-          <h3 style={styles.chartTitle}>{targetDate === new Date().toISOString().split('T')[0] ? "Today's" : new Date(targetDate).toLocaleDateString([], { month: 'short', day: 'numeric' })} Traffic by Hour</h3>
-          <p style={styles.chartSubtitle}>Scan counts hourly throughout school session</p>
+          <h3 style={styles.chartTitle}>{targetDate === new Date().toISOString().split('T')[0] ? "Today's" : new Date(targetDate).toLocaleDateString([], { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })} Traffic by Hour</h3>
+          <p style={styles.chartSubtitle}>Scan counts hourly throughout the workday</p>
           <div className="chart-bar-container">
             {stats.hourlyStats.map((item) => {
               const heightPercent = (item.count / maxHourlyCount) * 90; // scale up to 90%
@@ -191,9 +195,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <p style={styles.emptyRosterText}>Try searching another keyword or register staff in Settings.</p>
           </div>
         ) : (
-          <div style={styles.rosterGrid}>
+          <div className="roster-grid" style={styles.rosterGrid}>
             {filteredRoster.map((std) => {
               const { status, time } = getStudentStatus(std.studentId);
+              const totalScans = logs.filter(l => l.studentId.toLowerCase() === std.studentId.toLowerCase()).length;
               
               // Initials for avatar
               const initials = std.name
@@ -248,18 +253,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       )}
                       {status === 'NEVER' && (
                         <div style={styles.statusPillNever}>
-                          <span>NO RECORD</span>
+                          <span>No Activity Yet</span>
                         </div>
                       )}
                     </div>
 
-                    <button
-                      onClick={() => onQuickScan(std.studentId)}
-                      style={styles.quickScanBtn}
-                      title={`Trigger attendance log for ${std.name}`}
-                    >
-                      Scan
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>{totalScans} Scan{totalScans !== 1 ? 's' : ''}</span>
+                      <button
+                        onClick={() => onQuickScan(std.studentId)}
+                        style={styles.quickScanBtn}
+                        title={`Trigger attendance log for ${std.name}`}
+                      >
+                        Scan
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

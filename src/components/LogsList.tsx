@@ -21,11 +21,13 @@ export const LogsList: React.FC<LogsListProps> = ({ logs }) => {
       }
 
       const dateStr = date.toLocaleDateString([], { 
+        timeZone: 'Asia/Manila',
         month: 'short', 
         day: 'numeric', 
         year: 'numeric' 
       });
       const timeStr = date.toLocaleTimeString([], { 
+        timeZone: 'Asia/Manila',
         hour: '2-digit', 
         minute: '2-digit',
         second: '2-digit'

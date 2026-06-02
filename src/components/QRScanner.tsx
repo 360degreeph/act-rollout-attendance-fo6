@@ -186,7 +186,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({
         studentId: log.studentId,
         studentName: log.studentName,
         status: log.status,
-        timestamp: new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        timestamp: new Date(log.timestamp).toLocaleTimeString([], { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         position: log.position,
         office: log.office
       });

@@ -101,6 +101,7 @@ function App() {
   // Format today's date label
   const getTodayFormattedDate = () => {
     return new Date().toLocaleDateString([], {
+      timeZone: 'Asia/Manila',
       weekday: 'long',
       month: 'long',
       day: 'numeric',
