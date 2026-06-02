@@ -116,7 +116,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({
   }, [isOpen, selectedCameraId]);
 
   const isCooldownRef = useRef<boolean>(false);
-  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const toastTimeoutRef = useRef<number | null>(null);
 
   const handleToastClick = () => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
