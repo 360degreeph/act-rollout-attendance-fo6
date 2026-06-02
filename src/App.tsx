@@ -16,6 +16,13 @@ function App() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [liveTime, setLiveTime] = useState(new Date());
+
+  // Live Clock
+  useEffect(() => {
+    const timer = setInterval(() => setLiveTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Load configuration and data on initial mount
   useEffect(() => {
@@ -100,12 +107,21 @@ function App() {
 
   // Format today's date label
   const getTodayFormattedDate = () => {
-    return new Date().toLocaleDateString([], {
+    return liveTime.toLocaleDateString([], {
       timeZone: 'Asia/Manila',
-      weekday: 'long',
+      weekday: 'short',
       month: 'long',
       day: 'numeric',
       year: 'numeric'
+    });
+  };
+
+  const getLiveTimeFormatted = () => {
+    return liveTime.toLocaleTimeString([], {
+      timeZone: 'Asia/Manila',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -155,6 +171,8 @@ function App() {
           <div style={styles.dateBadge}>
             <Calendar size={14} color="var(--text-secondary)" />
             <span>{getTodayFormattedDate()}</span>
+            <span style={{ margin: '0 4px', color: 'rgba(255,255,255,0.3)' }}>|</span>
+            <span style={{ color: '#10b981', minWidth: '85px', textAlign: 'center' }}>{getLiveTimeFormatted()}</span>
           </div>
         </header>
 
