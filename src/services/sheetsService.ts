@@ -117,7 +117,7 @@ const generateMockLogs = (students: Student[]): AttendanceLog[] => {
 export class SheetsService {
   // Get active connection mode ('simulation' or 'sheets')
   static getMode(): 'simulation' | 'sheets' {
-    return (localStorage.getItem(STORAGE_KEYS.MODE) as 'simulation' | 'sheets') || 'simulation';
+    return (localStorage.getItem(STORAGE_KEYS.MODE) as 'simulation' | 'sheets') || 'sheets';
   }
 
   // Set active connection mode
@@ -127,7 +127,7 @@ export class SheetsService {
 
   // Get Google Apps Script Web App URL
   static getScriptUrl(): string {
-    return localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || '';
+    return localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || 'https://script.google.com/macros/s/AKfycbwxFQZWF1Bg_QylSS0sfXwQPxl5dezNFboHDoQZDLPP3XJgH_kF6kEZlrL-diN46Yuf/exec';
   }
 
   // Set Google Apps Script Web App URL
