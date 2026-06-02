@@ -134,7 +134,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({
       await scanner.start(
         selectedCameraId,
         {
-          fps: 12,
+          fps: 30,
           qrbox: (width, height) => {
             const size = Math.min(width, height) * 0.7;
             return { width: size, height: size };

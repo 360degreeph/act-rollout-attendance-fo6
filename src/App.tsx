@@ -62,10 +62,25 @@ function App() {
     try {
       const log = await SheetsService.scanStudent(studentId);
       
-      // Pull dataset to keep state synchronously updated across views
-      const refreshedData = await SheetsService.fetchData();
-      setStudents(refreshedData.students);
-      setLogs(refreshedData.logs);
+      // Optimistically update React state to avoid double-fetching the entire database!
+      setLogs(prev => [log, ...prev]);
+      
+      setStudents(prev => {
+        const exists = prev.some(s => s.studentId.toLowerCase() === log.studentId.toLowerCase());
+        if (!exists) {
+          return [{
+            studentId: log.studentId,
+            name: log.studentName,
+            department: log.department || 'Office',
+            email: '',
+            position: log.position,
+            sex: log.sex,
+            office: log.office,
+            qrcode: log.qrcode
+          }, ...prev];
+        }
+        return prev;
+      });
       
       return log;
     } catch (err) {
