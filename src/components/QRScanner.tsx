@@ -191,15 +191,15 @@ export const QRScanner: React.FC<QRScannerProps> = ({
         office: log.office
       });
 
-      // Clear toast after 3 seconds
+      // Clear toast after 0.5 seconds
       setTimeout(() => {
         setActiveToast((prev) => (prev && prev.studentId === log.studentId ? { ...prev, show: false } : prev));
-      }, 3000);
+      }, 500);
 
-      // Automatically resume accepting scans in 1.5 seconds so next staff member can scan!
+      // Automatically resume accepting scans in 0.5 seconds so next staff member can scan!
       setTimeout(() => {
         isCooldownRef.current = false;
-      }, 1500);
+      }, 500);
 
     } catch (err) {
       console.error('Scan error:', err);
