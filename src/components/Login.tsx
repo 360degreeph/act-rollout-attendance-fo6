@@ -25,10 +25,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div style={styles.container}>
       <div className="glass-card" style={styles.card}>
         <div style={styles.header}>
-          <div style={styles.iconWrapper}>
-            <ShieldCheck size={32} color="#3b82f6" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '68px', height: '68px', marginBottom: '0.25rem' }}>
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/4/47/Department_of_Social_Welfare_and_Development_%28DSWD%29.svg" 
+              alt="DSWD Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
           </div>
-          <h1 style={styles.title}>System Login</h1>
+          <h1 style={styles.title}>Kalahi-CIDSS PCRP</h1>
           <p style={styles.subtitle}>Enter your credentials to access the ACT Rollout Terminal</p>
         </div>
 

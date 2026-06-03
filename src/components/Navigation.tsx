@@ -20,12 +20,18 @@ export const Navigation: React.FC<NavigationProps> = ({
     <nav style={styles.nav}>
       <div style={styles.navContainer}>
         {/* Brand Logo & Name */}
-        <div style={styles.brand} onClick={() => setPage('scanner')}>
-          <div style={styles.logoWrapper}>
-            <QrCode size={24} color="#3b82f6" />
+        <div style={styles.brand} onClick={() => setPage('scanner')} title="Return to Scanner">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px' }}>
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/4/47/Department_of_Social_Welfare_and_Development_%28DSWD%29.svg" 
+              alt="DSWD Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
           </div>
-          <span style={styles.brandText}>ACT Rollout</span>
-          <span style={styles.brandSubtext}>June 4-11, 2026 - Field Office VI</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={styles.brandText}>Kalahi-CIDSS PCRP</span>
+            <span style={styles.brandSubtext}>ACT Rollout • Field Office VI</span>
+          </div>
         </div>
 
         {/* Tab Buttons */}
