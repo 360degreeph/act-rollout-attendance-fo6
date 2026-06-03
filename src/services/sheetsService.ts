@@ -421,11 +421,10 @@ export class SheetsService {
     // Scans today
     const scansToday = todayLogs.length;
 
-    // Checked-in now: For each student, check their latest log status up to targetDate
+    // Checked-in now: For each student, check their latest log status for the target date ONLY
     const latestStatusMap = new Map<string, 'IN' | 'OUT'>();
-    const logsUpToTarget = logs.filter(log => this.getManilaDateString(log.timestamp) <= targetManilaDate);
     
-    logsUpToTarget.forEach(log => {
+    todayLogs.forEach(log => {
       if (!latestStatusMap.has(log.studentId)) {
         latestStatusMap.set(log.studentId, log.status);
       }
