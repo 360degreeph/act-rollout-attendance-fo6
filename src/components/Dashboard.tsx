@@ -14,7 +14,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onQuickScan
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [targetDate, setTargetDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [targetDate, setTargetDate] = useState(() => SheetsService.getManilaDateString(new Date()));
   
   // Move stats calculation below filter
 
@@ -112,7 +112,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="layout-grid" style={{ marginBottom: '2rem' }}>
         {/* Hourly Check-ins bar chart */}
         <div className="glass-card">
-          <h3 style={styles.chartTitle}>{targetDate === new Date().toISOString().split('T')[0] ? "Today's" : new Date(targetDate).toLocaleDateString([], { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })} Traffic by Hour</h3>
+          <h3 style={styles.chartTitle}>{targetDate === SheetsService.getManilaDateString(new Date()) ? "Today's" : new Date(targetDate).toLocaleDateString([], { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })} Traffic by Hour</h3>
           <p style={styles.chartSubtitle}>Scan counts hourly throughout the workday</p>
           <div className="chart-bar-container">
             {stats.hourlyStats.map((item) => {

@@ -390,19 +390,32 @@ export class SheetsService {
     }
   }
 
+  // Helper to safely get YYYY-MM-DD in Manila Time
+  static getManilaDateString(date: Date | string): string {
+    const d = new Date(date);
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const parts = formatter.formatToParts(d);
+    const year = parts.find(p => p.type === 'year')?.value;
+    const month = parts.find(p => p.type === 'month')?.value;
+    const day = parts.find(p => p.type === 'day')?.value;
+    return `${year}-${month}-${day}`;
+  }
+
   // Compute Dashboard Statistics based on logs
   static getDashboardStats(students: Student[], logs: AttendanceLog[], targetDateStr?: string): DashboardStats {
-    const targetDate = targetDateStr ? new Date(targetDateStr) : new Date();
-    targetDate.setHours(0,0,0,0);
+    const targetManilaDate = targetDateStr || this.getManilaDateString(new Date());
     
     // Total registered students
     const totalStudents = students.length || 1;
 
     // Filter logs for targetDate
     const todayLogs = logs.filter(log => {
-      const logDate = new Date(log.timestamp);
-      logDate.setHours(0,0,0,0);
-      return logDate.getTime() === targetDate.getTime();
+      return this.getManilaDateString(log.timestamp) === targetManilaDate;
     });
 
     // Scans today
@@ -410,7 +423,7 @@ export class SheetsService {
 
     // Checked-in now: For each student, check their latest log status up to targetDate
     const latestStatusMap = new Map<string, 'IN' | 'OUT'>();
-    const logsUpToTarget = logs.filter(log => new Date(log.timestamp).getTime() < targetDate.getTime() + 86400000);
+    const logsUpToTarget = logs.filter(log => this.getManilaDateString(log.timestamp) <= targetManilaDate);
     
     logsUpToTarget.forEach(log => {
       if (!latestStatusMap.has(log.studentId)) {
@@ -436,8 +449,11 @@ export class SheetsService {
     const hourlyCounts = hours.map(h => {
       const hInt = parseInt(h.split(':')[0]);
       const count = todayLogs.filter(log => {
-        const d = new Date(log.timestamp);
-        return d.getHours() === hInt;
+        const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: 'numeric', hour12: false });
+        const parts = formatter.formatToParts(new Date(log.timestamp));
+        const logHourStr = parts.find(p => p.type === 'hour')?.value || '0';
+        const logHour = parseInt(logHourStr) % 24;
+        return logHour === hInt;
       }).length;
       return { hour: h, count };
     });
@@ -445,18 +461,17 @@ export class SheetsService {
     // Compute Weekly Stats (Last 7 Days ending on targetDate)
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const weeklyCounts = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(targetDate);
-      d.setDate(d.getDate() - (6 - i));
-      d.setHours(0,0,0,0);
+      // Parse targetManilaDate as UTC noon to safely shift days
+      const d = new Date(`${targetManilaDate}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - (6 - i));
+      const dayStr = d.toISOString().split('T')[0];
       
       const count = logs.filter(log => {
-        const logDate = new Date(log.timestamp);
-        logDate.setHours(0,0,0,0);
-        return logDate.getTime() === d.getTime();
+        return this.getManilaDateString(log.timestamp) === dayStr;
       }).length;
 
       return {
-        day: weekdays[d.getDay()],
+        day: weekdays[d.getUTCDay()],
         count
       };
     });
