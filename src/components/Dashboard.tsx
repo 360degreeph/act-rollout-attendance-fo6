@@ -20,7 +20,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Find latest status of each student for roster cards
   const getStudentStatus = (studentId: string): { status: 'IN' | 'OUT' | 'NEVER'; time?: string } => {
-    const studentLogs = logs.filter(l => l.studentId.toLowerCase() === studentId.toLowerCase());
+    const studentLogs = logs.filter(l => 
+      l.studentId.toLowerCase() === studentId.toLowerCase() &&
+      SheetsService.getManilaDateString(l.timestamp) === targetDate
+    );
     if (studentLogs.length === 0) {
       return { status: 'NEVER' };
     }
@@ -198,7 +201,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="roster-grid" style={styles.rosterGrid}>
             {filteredRoster.map((std) => {
               const { status, time } = getStudentStatus(std.studentId);
-              const totalScans = logs.filter(l => l.studentId.toLowerCase() === std.studentId.toLowerCase()).length;
+              const totalScans = logs.filter(l => 
+                l.studentId.toLowerCase() === std.studentId.toLowerCase() &&
+                SheetsService.getManilaDateString(l.timestamp) === targetDate
+              ).length;
               
               // Initials for avatar
               const initials = std.name
