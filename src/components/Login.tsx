@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, ShieldCheck } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 
 interface LoginProps {
   onLogin: () => void;
