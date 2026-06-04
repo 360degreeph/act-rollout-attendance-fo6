@@ -218,12 +218,12 @@ function doPost(e) {
         var newRow = [];
         var maxColIndex = Math.max(colMap.id, colMap.name, colMap.position, colMap.sex, colMap.office, colMap.qrcode);
         for (var cIdx = 1; cIdx <= maxColIndex; cIdx++) {
-          if (cIdx === colMap.id) newRow.push(staffId);
+          if (cIdx === colMap.id) newRow.push("'" + staffId); // force string
           else if (cIdx === colMap.name) newRow.push(staffName);
           else if (cIdx === colMap.position) newRow.push(position);
           else if (cIdx === colMap.sex) newRow.push("");
           else if (cIdx === colMap.office) newRow.push("");
-          else if (cIdx === colMap.qrcode) newRow.push(qrcode);
+          else if (cIdx === colMap.qrcode) newRow.push("'" + qrcode); // force string
           else newRow.push("");
         }
         studentsSheet.appendRow(newRow);
@@ -251,7 +251,7 @@ function doPost(e) {
       var maxLogColIndex = Math.max(logColMap.timestamp, logColMap.staffId, logColMap.status);
       for (var lIdx = 1; lIdx <= maxLogColIndex; lIdx++) {
         if (lIdx === logColMap.timestamp) logRecord.push(timestamp);
-        else if (lIdx === logColMap.staffId) logRecord.push(staffId);
+        else if (lIdx === logColMap.staffId) logRecord.push("'" + staffId); // force string
         else if (lIdx === logColMap.status) logRecord.push(newStatus);
         else logRecord.push("");
       }
@@ -313,7 +313,7 @@ function doPost(e) {
         var newRow = [];
         var maxColIndex = Math.max(colMap.id, colMap.name, colMap.position, colMap.sex, colMap.office);
         for (var cIdx = 1; cIdx <= maxColIndex; cIdx++) {
-          if (cIdx === colMap.id) newRow.push(id);
+          if (cIdx === colMap.id) newRow.push("'" + id); // force string
           else if (cIdx === colMap.name) newRow.push(name);
           else if (cIdx === colMap.position) newRow.push(positionVal);
           else if (cIdx === colMap.sex) newRow.push(sexVal);
