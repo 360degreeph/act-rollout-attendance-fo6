@@ -116,6 +116,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({
   }, [isOpen, selectedCameraId]);
 
   const isCooldownRef = useRef<boolean>(false);
+  const lastScannedIdRef = useRef<string | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
 
   const handleToastClick = () => {
@@ -149,9 +150,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({
         },
         async (decodedText) => {
           // Play buzzer chimes and push scan record
-          if (!isCooldownRef.current) {
-            await handleScanAction(decodedText);
-          }
+          await handleScanAction(decodedText);
         },
         () => {
           // Silent frame parsing failure chimes
@@ -180,9 +179,15 @@ export const QRScanner: React.FC<QRScannerProps> = ({
     const cleanId = id.trim();
     if (!cleanId) return;
 
+    // Block scanning the exact same ID rapidly to prevent duplicates
+    if (isCooldownRef.current && lastScannedIdRef.current === cleanId) {
+      return;
+    }
+
     try {
-      // Set cooldown to prevent duplicate triggers while processing
+      // Set cooldown only for this specific ID
       isCooldownRef.current = true;
+      lastScannedIdRef.current = cleanId;
 
       const log = await onScanSuccess(cleanId);
       playBeep(log.status);
@@ -198,12 +203,15 @@ export const QRScanner: React.FC<QRScannerProps> = ({
         office: log.office
       });
 
-      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
       
-      toastTimeoutRef.current = setTimeout(() => {
+      toastTimeoutRef.current = window.setTimeout(() => {
         setActiveToast((prev) => (prev && prev.studentId === log.studentId ? { ...prev, show: false } : prev));
-        isCooldownRef.current = false;
-      }, 1000);
+        // Reset cooldown so they can scan the SAME person again if needed (e.g. check out)
+        if (lastScannedIdRef.current === cleanId) {
+          isCooldownRef.current = false;
+        }
+      }, 1500) as unknown as number;
 
     } catch (err) {
       console.error('Scan error:', err);
@@ -211,7 +219,9 @@ export const QRScanner: React.FC<QRScannerProps> = ({
       
       // Auto-restart accepting scans after 3 seconds even on error
       setTimeout(() => {
-        isCooldownRef.current = false;
+        if (lastScannedIdRef.current === cleanId) {
+          isCooldownRef.current = false;
+        }
       }, 3000);
     }
   };
