@@ -363,7 +363,8 @@ export class SheetsService {
           department: student.department || '',
           position: student.position || '',
           sex: student.sex || '',
-          office: student.office || ''
+          office: student.office || '',
+          rfid: student.rfid || ''
         }).toString()
       });
 
