@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Users, UserCheck, CalendarCheck, Clock, Search, ArrowUpRight, ArrowDownLeft, GraduationCap, Building2 } from 'lucide-react';
+import { Users, UserCheck, Activity, GraduationCap, Building2, ArrowUpRight, ArrowDownLeft, Search, BarChart3, CalendarCheck, Clock } from 'lucide-react';
 import { SheetsService, type Student, type AttendanceLog } from '../services/sheetsService';
+import { maskName } from '../utils/maskName';
 
 interface DashboardProps {
   students: Student[];
@@ -220,8 +221,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <div style={styles.rosterCardTop}>
                     <div style={styles.avatarCircle}>{initials}</div>
                     <div style={styles.rosterCardMeta}>
-                      <h4 style={styles.studentNameText}>{std.name}</h4>
-                      <span style={styles.studentIdText}>ID: {std.studentId}</span>
+                      <h4 style={styles.studentNameText}>{maskName(std.name)}</h4>
+                      <span style={styles.studentIdText}>ID: {maskName(std.studentId)}</span>
                     </div>
                   </div>
 

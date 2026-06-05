@@ -7,6 +7,7 @@ import { Settings } from './components/Settings';
 import { Login } from './components/Login';
 import { SheetsService, type Student, type AttendanceLog } from './services/sheetsService';
 import { Sparkles, Calendar, UserCheck, Camera, CreditCard } from 'lucide-react';
+import { maskName } from './utils/maskName';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'scanner' | 'dashboard' | 'settings'>('scanner');
@@ -453,7 +454,7 @@ function App() {
             <div style={{ fontSize: '2rem', fontWeight: '900', letterSpacing: '1px', marginBottom: '0.5rem', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
               {globalToast.status === 'IN' ? 'LOGGED IN' : 'LOGGED OUT'}
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.25rem' }}>{globalToast.studentName}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.25rem' }}>{maskName(globalToast.studentName)}</div>
             <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>{globalToast.timestamp}</div>
             <div style={{ fontSize: '1rem', opacity: 0.8, marginTop: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '12px', display: 'inline-block' }}>
               {globalToast.office || globalToast.position || 'Staff'}

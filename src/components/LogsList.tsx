@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Download, ArrowUpRight, ArrowDownLeft, Clock, History } from 'lucide-react';
 import type { AttendanceLog } from '../services/sheetsService';
+import { maskName } from '../utils/maskName';
 
 interface LogsListProps {
   logs: AttendanceLog[];
@@ -199,8 +200,8 @@ export const LogsList: React.FC<LogsListProps> = ({ logs }) => {
                           {initials}
                         </div>
                         <div style={styles.studentDetails}>
-                          <span style={styles.studentName}>{log.studentName}</span>
-                          <span style={styles.studentId}>ID: {log.studentId}</span>
+                          <span style={styles.studentName}>{maskName(log.studentName)}</span>
+                          <span style={styles.studentId}>ID: {maskName(log.studentId)}</span>
                         </div>
                       </div>
                     </td>
