@@ -34,6 +34,7 @@ export const Settings: React.FC<SettingsProps> = ({
   const [stdPosition, setStdPosition] = useState('');
   const [stdSex, setStdSex] = useState('');
   const [stdOffice, setStdOffice] = useState('');
+  const [stdRfid, setStdRfid] = useState('');
   const [regStatus, setRegStatus] = useState<{ success: boolean; message: string } | null>(null);
 
   // Instructions Expand
@@ -98,7 +99,8 @@ export const Settings: React.FC<SettingsProps> = ({
         email: '',
         position: stdPosition.trim(),
         sex: stdSex.trim(),
-        office: stdOffice.trim()
+        office: stdOffice.trim(),
+        rfid: stdRfid.trim()
       };
 
       await onRegisterStudent(student);
@@ -114,6 +116,7 @@ export const Settings: React.FC<SettingsProps> = ({
       setStdPosition('');
       setStdSex('');
       setStdOffice('');
+      setStdRfid('');
 
     } catch (err) {
       setRegStatus({
@@ -372,6 +375,17 @@ export const Settings: React.FC<SettingsProps> = ({
               className="form-input"
               value={stdOffice}
               onChange={(e) => setStdOffice(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">RFID Card Number (Optional)</label>
+            <input
+              type="text"
+              placeholder="e.g. 0001234567"
+              className="form-input"
+              value={stdRfid}
+              onChange={(e) => setStdRfid(e.target.value)}
             />
           </div>
 

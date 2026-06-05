@@ -7,6 +7,7 @@ export interface Student {
   sex?: string;       // SEX
   office?: string;    // OFFICE
   qrcode?: string;    // QRCODE
+  rfid?: string;      // RFID
 }
 
 export interface AttendanceLog {
@@ -20,6 +21,7 @@ export interface AttendanceLog {
   sex?: string;
   office?: string;
   qrcode?: string;
+  rfid?: string;
 }
 
 export interface DashboardStats {

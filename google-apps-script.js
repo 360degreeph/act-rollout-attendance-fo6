@@ -39,8 +39,8 @@ function initSheets() {
   var studentsSheet = getSheetCaseInsensitive(ss, "masterlist");
   if (!studentsSheet) {
     studentsSheet = ss.insertSheet("masterlist");
-    // Setup exact user headers: ID, NAME, POSITION, SEX, OFFICE, QRCODE
-    studentsSheet.appendRow(["ID", "NAME", "POSITION", "SEX", "OFFICE", "QRCODE"]);
+    // Setup exact user headers: ID, NAME, POSITION, SEX, OFFICE, QRCODE, RFID
+    studentsSheet.appendRow(["ID", "NAME", "POSITION", "SEX", "OFFICE", "QRCODE", "RFID"]);
     studentsSheet.getRange("A1:F1").setFontWeight("bold").setBackground("#f3f4f6");
     studentsSheet.setFrozenRows(1);
     
@@ -53,7 +53,7 @@ function initSheets() {
 
 // Helper to dynamically locate column indices of the masterlist sheet
 function getMasterlistColumnMapping(studentsSheet) {
-  var mapping = { id: 1, name: 2, position: 3, sex: 4, office: 5, qrcode: 6 }; // defaults (1-based indices)
+  var mapping = { id: 1, name: 2, position: 3, sex: 4, office: 5, qrcode: 6, rfid: -1 }; // defaults (1-based indices)
   var lastColumn = studentsSheet.getLastColumn();
   if (lastColumn === 0) return mapping;
   
@@ -66,6 +66,7 @@ function getMasterlistColumnMapping(studentsSheet) {
     else if (h === "SEX" || h.includes("GENDER")) mapping.sex = c + 1;
     else if (h === "OFFICE" || h.includes("ROOM") || h.includes("DEPT")) mapping.office = c + 1;
     else if (h === "QRCODE" || h.includes("QR")) mapping.qrcode = c + 1;
+    else if (h === "RFID") mapping.rfid = c + 1;
   }
   return mapping;
 }
@@ -112,7 +113,8 @@ function doGet(e) {
         position: row[colMap.position - 1] ? row[colMap.position - 1].toString().trim() : "Staff Member",
         sex: row[colMap.sex - 1] ? row[colMap.sex - 1].toString().trim() : "Unknown",
         office: row[colMap.office - 1] ? row[colMap.office - 1].toString().trim() : "Office",
-        qrcode: row[colMap.qrcode - 1] ? row[colMap.qrcode - 1].toString().trim() : stdId
+        qrcode: row[colMap.qrcode - 1] ? row[colMap.qrcode - 1].toString().trim() : stdId,
+        rfid: (colMap.rfid > 0 && row[colMap.rfid - 1]) ? row[colMap.rfid - 1].toString().trim() : ""
       });
     }
     
@@ -188,20 +190,24 @@ function doPost(e) {
       var sex = "Unknown";
       var office = "Office";
       var qrcode = "";
+      var rfidVal = "";
       var staffFound = false;
       
-      // Look up staff details: Match scanValue against EITHER "ID" column or "QRCODE" column!
+      // Look up staff details: Match scanValue against ID, QRCODE, or RFID column
       for (var i = 1; i < studentsData.length; i++) {
         var rowId = studentsData[i][colMap.id - 1] ? studentsData[i][colMap.id - 1].toString().trim() : "";
         var rowQr = studentsData[i][colMap.qrcode - 1] ? studentsData[i][colMap.qrcode - 1].toString().trim() : "";
+        var rowRfid = (colMap.rfid > 0 && studentsData[i][colMap.rfid - 1]) ? studentsData[i][colMap.rfid - 1].toString().trim() : "";
         
-        if (rowId.toLowerCase() === scanValue.toLowerCase() || rowQr.toLowerCase() === scanValue.toLowerCase()) {
+        var scanLower = scanValue.toLowerCase();
+        if (rowId.toLowerCase() === scanLower || rowQr.toLowerCase() === scanLower || (rowRfid !== "" && rowRfid.toLowerCase() === scanLower)) {
           staffId = rowId;
           staffName = studentsData[i][colMap.name - 1] ? studentsData[i][colMap.name - 1].toString().trim() : "";
           position = studentsData[i][colMap.position - 1] ? studentsData[i][colMap.position - 1].toString().trim() : "Staff Member";
           sex = studentsData[i][colMap.sex - 1] ? studentsData[i][colMap.sex - 1].toString().trim() : "Unknown";
           office = studentsData[i][colMap.office - 1] ? studentsData[i][colMap.office - 1].toString().trim() : "Office";
           qrcode = rowQr;
+          rfidVal = rowRfid;
           staffFound = true;
           break;
         }
@@ -216,7 +222,7 @@ function doPost(e) {
         
         // Append to masterlist matching the dynamic columns
         var newRow = [];
-        var maxColIndex = Math.max(colMap.id, colMap.name, colMap.position, colMap.sex, colMap.office, colMap.qrcode);
+        var maxColIndex = Math.max(colMap.id, colMap.name, colMap.position, colMap.sex, colMap.office, colMap.qrcode, colMap.rfid);
         for (var cIdx = 1; cIdx <= maxColIndex; cIdx++) {
           if (cIdx === colMap.id) newRow.push("'" + staffId); // force string
           else if (cIdx === colMap.name) newRow.push(staffName);
@@ -224,6 +230,7 @@ function doPost(e) {
           else if (cIdx === colMap.sex) newRow.push("");
           else if (cIdx === colMap.office) newRow.push("");
           else if (cIdx === colMap.qrcode) newRow.push("'" + qrcode); // force string
+          else if (cIdx === colMap.rfid) newRow.push("");
           else newRow.push("");
         }
         studentsSheet.appendRow(newRow);
@@ -293,6 +300,7 @@ function doPost(e) {
       var positionVal = postData.position || "";
       var sexVal = postData.sex || "";
       var officeVal = postData.office || "";
+      var rfidValParam = postData.rfid || "";
       
       if (!id || !name) {
         throw new Error("Staff ID and Name are required");
@@ -319,17 +327,21 @@ function doPost(e) {
         studentsSheet.getRange(existingRow, colMap.position).setValue(positionVal);
         studentsSheet.getRange(existingRow, colMap.sex).setValue(sexVal);
         studentsSheet.getRange(existingRow, colMap.office).setValue(officeVal);
+        if (colMap.rfid > 0) {
+          studentsSheet.getRange(existingRow, colMap.rfid).setValue("'" + rfidValParam);
+        }
         // QRCODE column is skipped as it is auto-generated via formula
       } else {
         // Append new staff matching dynamic columns
         var newRow = [];
-        var maxColIndex = Math.max(colMap.id, colMap.name, colMap.position, colMap.sex, colMap.office);
+        var maxColIndex = Math.max(colMap.id, colMap.name, colMap.position, colMap.sex, colMap.office, colMap.rfid);
         for (var cIdx = 1; cIdx <= maxColIndex; cIdx++) {
           if (cIdx === colMap.id) newRow.push("'" + id); // force string
           else if (cIdx === colMap.name) newRow.push(name);
           else if (cIdx === colMap.position) newRow.push(positionVal);
           else if (cIdx === colMap.sex) newRow.push(sexVal);
           else if (cIdx === colMap.office) newRow.push(officeVal);
+          else if (cIdx === colMap.rfid) newRow.push("'" + rfidValParam);
           else newRow.push("");
         }
         studentsSheet.appendRow(newRow);
