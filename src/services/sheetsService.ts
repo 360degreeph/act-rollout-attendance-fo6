@@ -37,7 +37,8 @@ const STORAGE_KEYS = {
   MODE: 'attendance_mode', // 'simulation' | 'sheets'
   SCRIPT_URL: 'attendance_script_url',
   STUDENTS: 'attendance_students',
-  LOGS: 'attendance_logs'
+  LOGS: 'attendance_logs',
+  SYNC_QUEUE: 'attendance_sync_queue'
 };
 
 // Initial Mock Staffs matching headers ID, NAME, POSITION, SEX, OFFICE, QRCODE
@@ -221,112 +222,81 @@ export class SheetsService {
     }
   }
 
-  // Record a Scan log
-  static async scanStudent(studentId: string): Promise<AttendanceLog> {
+  // Start background queue processor
+  static startQueueProcessor() {
+    setInterval(() => {
+      this.processSyncQueue();
+    }, 5000); // Attempt to flush queue every 5 seconds
+  }
+
+  // Record a Scan log into offline queue
+  static queueScan(studentId: string, timestamp: string) {
     const cleanId = studentId.trim();
-    if (!cleanId) {
-      throw new Error('Student ID cannot be empty');
-    }
+    if (!cleanId) return;
 
-    const mode = this.getMode();
-    const scriptUrl = this.getScriptUrl();
-
-    if (mode === 'simulation' || !scriptUrl) {
-      // Handle simulation check
-      this.initializeLocalData();
-      const students = this.getLocalStudents();
-      const logs = this.getLocalLogs();
-
-      let student = students.find(s => s.studentId.toLowerCase() === cleanId.toLowerCase());
-      
-      // Auto-register student if they don't exist in dummy list
-      if (!student) {
-        student = {
-          studentId: cleanId,
-          name: `Student (${cleanId})`,
-          department: 'Auto-Registered',
-          email: ''
-        };
-        students.push(student);
-        this.saveLocalStudents(students);
-      }
-
-      // Check last log for this student to toggle
-      const studentLogs = logs.filter(l => l.studentId.toLowerCase() === cleanId.toLowerCase());
-      const lastLog = studentLogs[0]; // Sort order is descending, so 0 is latest
-      const nextStatus = (lastLog && lastLog.status === 'IN') ? 'OUT' : 'IN';
-      
-      const newLog: AttendanceLog = {
-        timestamp: new Date().toISOString(),
-        studentId: student.studentId,
-        studentName: student.name,
-        status: nextStatus,
-        department: student.department,
-        email: student.email
-      };
-
-      logs.unshift(newLog); // Put at front
-      this.saveLocalLogs(logs);
-      return newLog;
-    }
-
-    // Google Sheets mode
     try {
-      // We perform a POST request to Google Apps Script Web App URL.
-      // Using application/x-www-form-urlencoded prevents CORS preflight (OPTIONS) 
-      // AND allows Apps Script to automatically populate `e.parameter` correctly.
-      const response = await fetch(scriptUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          action: 'scan',
-          studentId: cleanId
-        }).toString()
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const queueRaw = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
+      const queue: { studentId: string; timestamp: string }[] = queueRaw ? JSON.parse(queueRaw) : [];
+      queue.push({ studentId: cleanId, timestamp });
+      localStorage.setItem(STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(queue));
       
-      const data = await response.json();
-      if (data.success) {
-        // Log is returned from sheets
-        const newLog: AttendanceLog = {
-          timestamp: data.log.timestamp,
-          studentId: data.log.studentId,
-          studentName: data.log.studentName,
-          status: data.log.status as 'IN' | 'OUT',
-          department: data.log.department,
-          email: data.log.email
-        };
+      // Trigger processor immediately
+      this.processSyncQueue();
+    } catch (e) {
+      console.error('Failed to queue scan:', e);
+    }
+  }
 
-        // Prepend to local logs cache
-        const localLogs = this.getLocalLogs();
-        localLogs.unshift(newLog);
-        this.saveLocalLogs(localLogs);
+  private static isProcessingQueue = false;
 
-        // Also check if student was auto-registered, update student cache
-        const localStudents = this.getLocalStudents();
-        if (!localStudents.some(s => s.studentId === newLog.studentId)) {
-          localStudents.push({
-            studentId: newLog.studentId,
-            name: newLog.studentName,
-            department: newLog.department || 'Auto-Registered',
-            email: newLog.email || ''
-          });
-          this.saveLocalStudents(localStudents);
+  // Process the offline queue
+  static async processSyncQueue() {
+    if (this.isProcessingQueue) return;
+    this.isProcessingQueue = true;
+
+    try {
+      const mode = this.getMode();
+      const scriptUrl = this.getScriptUrl();
+      
+      if (mode === 'simulation' || !scriptUrl) {
+        localStorage.removeItem(STORAGE_KEYS.SYNC_QUEUE);
+        return;
+      }
+
+      const queueRaw = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
+      let queue: { studentId: string; timestamp: string }[] = queueRaw ? JSON.parse(queueRaw) : [];
+
+      while (queue.length > 0) {
+        const item = queue[0];
+        
+        const response = await fetch(scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: 'scan',
+            studentId: item.studentId,
+            timestamp: item.timestamp
+          }).toString()
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        if (!data.success) {
+          console.error('Server rejected queued scan:', data.error);
         }
 
-        return newLog;
-      } else {
-        throw new Error(data.error || 'Failed to scan log in Google Sheets');
+        const freshQueueRaw = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
+        queue = freshQueueRaw ? JSON.parse(freshQueueRaw) : [];
+        if (queue.length > 0 && queue[0].studentId === item.studentId && queue[0].timestamp === item.timestamp) {
+          queue.shift();
+          localStorage.setItem(STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(queue));
+        }
       }
     } catch (error) {
-      console.error('Sheets POST error, falling back to local simulation scan:', error);
-      // Let's toggle to simulation mode scan or raise error
-      throw new Error(`Failed to connect to Google Sheets backend API. Please verify Web App URL.\nOriginal error: ${error instanceof Error ? error.message : String(error)}`);
+      // Network error (offline). Do nothing, it will remain in queue and retry later.
+    } finally {
+      this.isProcessingQueue = false;
     }
   }
 

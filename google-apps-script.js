@@ -241,7 +241,7 @@ function doPost(e) {
       var logsData = logsSheet.getDataRange().getValues();
       var lastStatus = "OUT"; // Default to check-in if no previous scans
       
-      var timestamp = new Date();
+      var timestamp = postData.timestamp ? new Date(postData.timestamp) : new Date();
       var currentManilaDate = Utilities.formatDate(timestamp, "Asia/Manila", "yyyy-MM-dd");
       
       // Find the last scan for this staff in logs to toggle status (IN -> OUT -> IN)

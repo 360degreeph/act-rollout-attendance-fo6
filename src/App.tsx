@@ -34,6 +34,7 @@ function App() {
 
   // Live Clock
   useEffect(() => {
+    SheetsService.startQueueProcessor(); // Initialize background offline syncing
     const timer = setInterval(() => setLiveTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -135,14 +136,8 @@ function App() {
       }, ...prev]);
     }
 
-    // 4. Background Sync (Fire-and-forget)
-    setIsSyncing(true);
-    SheetsService.scanStudent(cleanId)
-      .catch(err => {
-        console.error('Background sync failed:', err);
-        setErrorMsg('Sync delayed. Will reconnect soon. ' + (err instanceof Error ? err.message : String(err)));
-      })
-      .finally(() => setIsSyncing(false));
+    // 4. Background Sync Offline Queue
+    SheetsService.queueScan(cleanId, timestamp);
 
     return optimisticLog;
   };
