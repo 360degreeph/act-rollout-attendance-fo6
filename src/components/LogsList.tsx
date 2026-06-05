@@ -53,32 +53,7 @@ export const LogsList: React.FC<LogsListProps> = ({ logs }) => {
     return matchesSearch && matchesStatus;
   });
 
-  // Export to CSV Function
-  const exportToCSV = () => {
-    if (filteredLogs.length === 0) return;
-    
-    const headers = ['Timestamp', 'Student ID', 'Student Name', 'Department', 'Email', 'Status'];
-    const rows = filteredLogs.map(log => [
-      new Date(log.timestamp).toISOString(),
-      log.studentId,
-      log.studentName,
-      log.department || 'N/A',
-      log.email || 'N/A',
-      log.status
-    ]);
 
-    const csvContent = 
-      "data:text/csv;charset=utf-8," + 
-      [headers.join(','), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
-      
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `attendance_logs_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className="glass-card" style={styles.container}>
@@ -94,16 +69,6 @@ export const LogsList: React.FC<LogsListProps> = ({ logs }) => {
           </div>
         </div>
 
-        <button 
-          onClick={exportToCSV}
-          className="btn btn-secondary"
-          style={styles.exportBtn}
-          disabled={filteredLogs.length === 0}
-          title="Export current filtered list to CSV"
-        >
-          <Download size={16} />
-          <span>Export CSV</span>
-        </button>
       </div>
 
       {/* Filter and Search Bar */}
