@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, UserCheck, Activity, GraduationCap, Building2, ArrowUpRight, ArrowDownLeft, Search, BarChart3, CalendarCheck, Clock } from 'lucide-react';
+import { Users, UserCheck, GraduationCap, Building2, ArrowUpRight, ArrowDownLeft, Search, CalendarCheck, Clock } from 'lucide-react';
 import { SheetsService, type Student, type AttendanceLog } from '../services/sheetsService';
 import { maskName } from '../utils/maskName';
 

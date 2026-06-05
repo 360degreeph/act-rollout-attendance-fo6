@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Download, ArrowUpRight, ArrowDownLeft, Clock, History } from 'lucide-react';
+import { Search, ArrowUpRight, ArrowDownLeft, Clock, History } from 'lucide-react';
 import type { AttendanceLog } from '../services/sheetsService';
 import { maskName } from '../utils/maskName';
 
