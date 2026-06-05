@@ -433,28 +433,36 @@ function App() {
       {globalToast && globalToast.show && (
         <div style={{
           position: 'fixed',
-          bottom: '20px',
-          right: '20px',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
           background: globalToast.status === 'IN' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)',
-          border: `1px solid ${globalToast.status === 'IN' ? '#34d399' : '#f87171'}`,
+          border: `2px solid ${globalToast.status === 'IN' ? '#34d399' : '#f87171'}`,
           color: 'white',
-          padding: '1rem',
-          borderRadius: '12px',
-          boxShadow: globalToast.status === 'IN' ? '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)',
-          zIndex: 9999,
+          padding: '2.5rem 3rem',
+          borderRadius: '24px',
+          boxShadow: globalToast.status === 'IN' ? '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 60px rgba(16, 185, 129, 0.5)' : '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 60px rgba(239, 68, 68, 0.5)',
+          zIndex: 99999,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           gap: '1rem',
-          minWidth: '300px',
-          transition: 'all 0.3s ease-out'
+          minWidth: '400px',
+          textAlign: 'center',
+          backdropFilter: 'blur(12px)'
         }}>
-          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '50%' }}>
-            <UserCheck size={28} color="white" />
+          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '50%', marginBottom: '0.5rem' }}>
+            <UserCheck size={56} color="white" />
           </div>
           <div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{globalToast.status === 'IN' ? 'LOGGED IN' : 'LOGGED OUT'}</div>
-            <div style={{ fontWeight: 600 }}>{globalToast.studentName}</div>
-            <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>{globalToast.timestamp} • {globalToast.office || globalToast.position || 'Staff'}</div>
+            <div style={{ fontSize: '2rem', fontWeight: '900', letterSpacing: '1px', marginBottom: '0.5rem', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+              {globalToast.status === 'IN' ? 'LOGGED IN' : 'LOGGED OUT'}
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.25rem' }}>{globalToast.studentName}</div>
+            <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>{globalToast.timestamp}</div>
+            <div style={{ fontSize: '1rem', opacity: 0.8, marginTop: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '12px', display: 'inline-block' }}>
+              {globalToast.office || globalToast.position || 'Staff'}
+            </div>
           </div>
         </div>
       )}
