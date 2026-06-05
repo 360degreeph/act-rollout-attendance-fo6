@@ -6,7 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { Settings } from './components/Settings';
 import { Login } from './components/Login';
 import { SheetsService, type Student, type AttendanceLog } from './services/sheetsService';
-import { Sparkles, Calendar, UserCheck, Camera } from 'lucide-react';
+import { Sparkles, Calendar, UserCheck, Camera, CreditCard } from 'lucide-react';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'scanner' | 'dashboard' | 'settings'>('scanner');
@@ -216,25 +216,57 @@ function App() {
         <div style={{ position: 'relative' }}>
           {currentPage === 'scanner' && (
             <div style={styles.scannerPageContainer}>
-              {/* Full Width Glowing Banner Launcher */}
-              <div className="glass-card" style={styles.bannerCard}>
-                <div style={styles.bannerLeft}>
+              {/* Split Header: Camera & RFID */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                
+                {/* Live Camera Scanner */}
+                <div className="glass-card" style={{ ...styles.bannerCard, marginBottom: 0, flexDirection: 'column', alignItems: 'flex-start' }}>
                   <div style={styles.indicatorContainer}>
                     <div style={styles.activePulseDot} />
-                    <span style={styles.bannerStatusText}>TERMINAL ACTIVE</span>
+                    <span style={styles.bannerStatusText}>CAMERA ACTIVE</span>
                   </div>
-                  <h2 style={styles.bannerTitle}>Scan Terminal Gate</h2>
-                  <p style={styles.bannerText}>Launch the high-speed live QR camera pop-up window to begin registering staff check-ins and check-outs.</p>
+                  <h2 style={{ ...styles.bannerTitle, fontSize: '1.35rem' }}>Live QR Scanner</h2>
+                  <p style={{ ...styles.bannerText, marginBottom: '1.5rem' }}>Launch the high-speed live camera to begin registering staff check-ins and check-outs.</p>
+                  
+                  <button 
+                    onClick={() => setIsScannerOpen(true)}
+                    className="btn btn-primary"
+                    style={{ ...styles.launchBtn, width: '100%', marginTop: 'auto', justifyContent: 'center' }}
+                  >
+                    <Camera size={18} />
+                    <span>Launch Live Camera</span>
+                  </button>
                 </div>
-                
-                <button 
-                  onClick={() => setIsScannerOpen(true)}
-                  className="btn btn-primary"
-                  style={styles.launchBtn}
-                >
-                  <Camera size={18} />
-                  <span>Launch Live Scanner</span>
-                </button>
+
+                {/* Active RFID Scanner */}
+                <div className="glass-card" style={{ ...styles.bannerCard, marginBottom: 0, flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <div style={styles.indicatorContainer}>
+                    <div style={{ ...styles.activePulseDot, background: '#8b5cf6', boxShadow: '0 0 10px rgba(139,92,246,0.6)' }} />
+                    <span style={{ ...styles.bannerStatusText, color: '#8b5cf6' }}>RFID READY</span>
+                  </div>
+                  <h2 style={{ ...styles.bannerTitle, fontSize: '1.35rem' }}>Active RFID Scanner</h2>
+                  <p style={{ ...styles.bannerText, marginBottom: '1.5rem' }}>Plug in your USB RFID scanner. Ensure this box is focused before tapping cards.</p>
+                  
+                  <div style={{ width: '100%', marginTop: 'auto', position: 'relative' }}>
+                    <CreditCard size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                    <input 
+                      type="text" 
+                      placeholder="Focus here & tap RFID card..." 
+                      className="form-input"
+                      style={{ width: '100%', paddingLeft: '2.75rem', paddingRight: '1rem', height: '42px', background: 'rgba(0,0,0,0.2)', borderColor: 'rgba(139,92,246,0.3)' }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const val = e.currentTarget.value;
+                          if (val.trim()) {
+                            handleQuickScan(val);
+                          }
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
               </div>
 
               {/* Running logs list taking up full-width below */}
