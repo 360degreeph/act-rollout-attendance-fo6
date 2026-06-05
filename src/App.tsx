@@ -13,8 +13,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState<'scanner' | 'dashboard' | 'settings'>('scanner');
   const [students, setStudents] = useState<Student[]>([]);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
-  const [syncMode, setSyncMode] = useState<'simulation' | 'sheets'>('simulation');
-  const [scriptUrl, setScriptUrl] = useState<string>('');
+  const [syncMode, setSyncMode] = useState<'simulation' | 'sheets'>(SheetsService.getMode());
+  const [scriptUrl, setScriptUrl] = useState<string>(SheetsService.getScriptUrl() || '');
+  const [apiKey, setApiKey] = useState<string>(SheetsService.getApiKey() || '');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
@@ -417,6 +418,8 @@ function App() {
               setSyncMode={setSyncMode}
               scriptUrl={scriptUrl}
               setScriptUrl={setScriptUrl}
+              apiKey={apiKey}
+              setApiKey={setApiKey}
               onRefreshData={refreshAllData}
               onRegisterStudent={handleRegisterStudent}
               onResetDb={handleResetDb}

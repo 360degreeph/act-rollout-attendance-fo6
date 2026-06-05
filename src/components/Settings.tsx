@@ -8,6 +8,8 @@ interface SettingsProps {
   setSyncMode: (mode: 'simulation' | 'sheets') => void;
   scriptUrl: string;
   setScriptUrl: (url: string) => void;
+  apiKey: string;
+  setApiKey: (key: string) => void;
   onRefreshData: () => Promise<void>;
   onRegisterStudent: (student: Student) => Promise<void>;
   onResetDb: () => void;
@@ -19,6 +21,8 @@ export const Settings: React.FC<SettingsProps> = ({
   setSyncMode,
   scriptUrl,
   setScriptUrl,
+  apiKey,
+  setApiKey,
   onRefreshData,
   onRegisterStudent,
   onResetDb
@@ -205,6 +209,21 @@ export const Settings: React.FC<SettingsProps> = ({
               <span style={styles.fieldHelp}>Paste the deployed Apps Script URL. Do not use sheet ID directly.</span>
             </div>
 
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+              <label className="form-label">Secret API Key</label>
+              <input
+                type="password"
+                placeholder="Enter API Key to secure your Google Sheets"
+                className="form-input"
+                value={apiKey}
+                onChange={(e) => {
+                  setApiKey(e.target.value);
+                  SheetsService.setApiKey(e.target.value);
+                }}
+              />
+              <span style={styles.fieldHelp}>Prevents unauthorized users from accessing or modifying data.</span>
+            </div>
+
             <button
               type="submit"
               className="btn btn-primary"
@@ -247,7 +266,7 @@ export const Settings: React.FC<SettingsProps> = ({
                   <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
                     <li><strong>Description</strong>: Attendance App Backend</li>
                     <li><strong>Execute as</strong>: <code>Me (your-email)</code></li>
-                    <li><strong>Who has access</strong>: <code>Anyone</code> (This is crucial so the web app can log codes).</li>
+                    <li><strong>Who has access</strong>: <code>Anyone</code> (This is crucial so the web app can log codes. The API Key provides the security).</li>
                   </ul>
                 </li>
                 <li>Click <strong>Deploy</strong>. Authorize permissions when prompted by Google.</li>

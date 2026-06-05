@@ -38,7 +38,8 @@ const STORAGE_KEYS = {
   SCRIPT_URL: 'attendance_script_url',
   STUDENTS: 'attendance_students',
   LOGS: 'attendance_logs',
-  SYNC_QUEUE: 'attendance_sync_queue'
+  SYNC_QUEUE: 'attendance_sync_queue',
+  API_KEY: 'attendance_api_key'
 };
 
 // Initial Mock Staffs matching headers ID, NAME, POSITION, SEX, OFFICE, QRCODE
@@ -129,13 +130,20 @@ export class SheetsService {
   }
 
   // Get Google Apps Script Web App URL
-  static getScriptUrl(): string {
-    return localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || 'https://script.google.com/macros/s/AKfycbwxFQZWF1Bg_QylSS0sfXwQPxl5dezNFboHDoQZDLPP3XJgH_kF6kEZlrL-diN46Yuf/exec';
+  static getScriptUrl(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.SCRIPT_URL);
   }
 
-  // Set Google Apps Script Web App URL
-  static setScriptUrl(url: string): void {
+  static setScriptUrl(url: string) {
     localStorage.setItem(STORAGE_KEYS.SCRIPT_URL, url);
+  }
+
+  static getApiKey(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.API_KEY);
+  }
+
+  static setApiKey(key: string) {
+    localStorage.setItem(STORAGE_KEYS.API_KEY, key);
   }
 
   // Initialize LocalStorage Database with dummy data if not already set
@@ -182,6 +190,7 @@ export class SheetsService {
   static async fetchData(): Promise<{ students: Student[]; logs: AttendanceLog[] }> {
     const mode = this.getMode();
     const scriptUrl = this.getScriptUrl();
+    const apiKey = this.getApiKey();
 
     if (mode === 'simulation' || !scriptUrl) {
       this.initializeLocalData();
@@ -192,7 +201,12 @@ export class SheetsService {
     }
 
     try {
-      const response = await fetch(`${scriptUrl}?t=${Date.now()}`);
+      const url = new URL(scriptUrl);
+      url.searchParams.append('action', 'get_data');
+      if (apiKey) url.searchParams.append('apiKey', apiKey);
+      url.searchParams.append('t', Date.now().toString());
+
+      const response = await fetch(url.toString());
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -257,6 +271,7 @@ export class SheetsService {
     try {
       const mode = this.getMode();
       const scriptUrl = this.getScriptUrl();
+      const apiKey = this.getApiKey() || '';
       
       if (mode === 'simulation' || !scriptUrl) {
         localStorage.removeItem(STORAGE_KEYS.SYNC_QUEUE);
@@ -275,7 +290,8 @@ export class SheetsService {
           body: new URLSearchParams({
             action: 'scan',
             studentId: item.studentId,
-            timestamp: item.timestamp
+            timestamp: item.timestamp,
+            apiKey
           }).toString()
         });
 
@@ -304,6 +320,7 @@ export class SheetsService {
   static async registerStudent(student: Student): Promise<void> {
     const mode = this.getMode();
     const scriptUrl = this.getScriptUrl();
+    const apiKey = this.getApiKey() || '';
 
     if (mode === 'simulation' || !scriptUrl) {
       this.initializeLocalData();
@@ -330,11 +347,11 @@ export class SheetsService {
           action: 'register',
           studentId: student.studentId,
           name: student.name,
-          department: student.department || '',
           position: student.position || '',
           sex: student.sex || '',
-          office: student.office || '',
-          rfid: student.rfid || ''
+          office: student.office || student.department || '',
+          rfid: student.rfid || '',
+          apiKey
         }).toString()
       });
 

@@ -87,8 +87,17 @@ function getLogsColumnMapping(logsSheet) {
   return mapping;
 }
 
+// Define the Secret API Key
+var SECRET_API_KEY = "FO6-ACT-ROLLOUT-2026-SECURE";
+
 // Handle GET requests (load logs, students, and basic stats)
 function doGet(e) {
+  var providedKey = e.parameter.apiKey;
+  if (providedKey !== SECRET_API_KEY) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Unauthorized: Invalid API Key" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   initSheets();
   
   try {
@@ -162,8 +171,6 @@ function doGet(e) {
 
 // Handle POST requests (performing scans or registering students/staff)
 function doPost(e) {
-  initSheets();
-  
   try {
     var postData;
     if (e.postData.type === "application/json") {
@@ -171,6 +178,14 @@ function doPost(e) {
     } else {
       postData = e.parameter;
     }
+    
+    var providedKey = postData.apiKey;
+    if (providedKey !== SECRET_API_KEY) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Unauthorized: Invalid API Key" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    initSheets();
     
     var action = postData.action || "scan";
     var ss = SpreadsheetApp.getActiveSpreadsheet();
