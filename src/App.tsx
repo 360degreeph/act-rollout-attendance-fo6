@@ -51,7 +51,7 @@ function App() {
     const savedUrl = SheetsService.getScriptUrl();
     
     setSyncMode(savedMode);
-    setScriptUrl(savedUrl);
+    setScriptUrl(savedUrl || '');
 
     // 3. Load core logs and student profiles
     refreshAllData();

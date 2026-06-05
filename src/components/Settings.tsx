@@ -84,7 +84,7 @@ export const Settings: React.FC<SettingsProps> = ({
       console.error('Connection test failed:', err);
       // Restore previous settings on failure
       SheetsService.setMode(originalMode);
-      SheetsService.setScriptUrl(originalUrl);
+      SheetsService.setScriptUrl(originalUrl || '');
       setTestResult({
         success: false,
         message: `Connection failed. Check if Web App is deployed as "Anyone" and permissions are granted.\nError: ${err instanceof Error ? err.message : String(err)}`
