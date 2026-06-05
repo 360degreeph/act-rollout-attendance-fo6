@@ -70,39 +70,81 @@ function App() {
     }
   };
 
-  // Perform student/staff scan check-in/out
+  // Perform student/staff scan check-in/out optimistically for ZERO-latency UI
   const handleScanSuccess = async (studentId: string): Promise<AttendanceLog> => {
-    setIsSyncing(true);
-    try {
-      const log = await SheetsService.scanStudent(studentId);
-      
-      // Optimistically update React state to avoid double-fetching the entire database!
-      setLogs(prev => [log, ...prev]);
-      
-      setStudents(prev => {
-        const exists = prev.some(s => s.studentId.toLowerCase() === log.studentId.toLowerCase());
-        if (!exists) {
-          return [{
-            studentId: log.studentId,
-            name: log.studentName,
-            department: log.department || 'Office',
-            email: '',
-            position: log.position,
-            sex: log.sex,
-            office: log.office,
-            qrcode: log.qrcode
-          }, ...prev];
+    const cleanId = studentId.trim();
+    
+    // 1. Find Staff Optimistically
+    const scanLower = cleanId.toLowerCase();
+    const existingStudent = students.find(s => 
+      s.studentId.toLowerCase() === scanLower || 
+      (s.qrcode && s.qrcode.toLowerCase() === scanLower) || 
+      (s.rfid && s.rfid.toLowerCase() === scanLower)
+    );
+
+    const staffId = existingStudent ? existingStudent.studentId : cleanId;
+    const staffName = existingStudent ? existingStudent.name : `Staff (${cleanId})`;
+    const position = existingStudent ? existingStudent.position : 'Auto-Registered';
+    const sex = existingStudent ? existingStudent.sex : 'Unknown';
+    const office = existingStudent ? existingStudent.office : 'Office';
+    const qrcode = existingStudent ? existingStudent.qrcode : cleanId;
+
+    // 2. Determine IN/OUT optimistically
+    const todayManila = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    let lastStatus = 'OUT';
+    
+    // Search local logs for the latest status TODAY
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      if (log.studentId.toLowerCase() === staffId.toLowerCase()) {
+        const logDateManila = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(log.timestamp));
+        if (logDateManila === todayManila) {
+          lastStatus = log.status;
         }
-        return prev;
-      });
-      
-      return log;
-    } catch (err) {
-      console.error('Scan logging failed:', err);
-      throw err; // bubble up to show in scanner error badge
-    } finally {
-      setIsSyncing(false);
+        break; // we found the most recent log for this person
+      }
     }
+
+    const newStatus = lastStatus === 'IN' ? 'OUT' : 'IN';
+    const timestamp = new Date().toISOString();
+
+    const optimisticLog: AttendanceLog = {
+      timestamp,
+      studentId: staffId,
+      studentName: staffName,
+      status: newStatus as 'IN' | 'OUT',
+      department: office,
+      position,
+      sex,
+      office,
+      qrcode
+    };
+
+    // 3. Apply Optimistic Updates to UI instantly
+    setLogs(prev => [optimisticLog, ...prev]);
+    if (!existingStudent) {
+      setStudents(prev => [{
+        studentId: staffId,
+        name: staffName,
+        department: office,
+        email: '',
+        position,
+        sex,
+        office,
+        qrcode
+      }, ...prev]);
+    }
+
+    // 4. Background Sync (Fire-and-forget)
+    setIsSyncing(true);
+    SheetsService.scanStudent(cleanId)
+      .catch(err => {
+        console.error('Background sync failed:', err);
+        setErrorMsg('Sync delayed. Will reconnect soon. ' + (err instanceof Error ? err.message : String(err)));
+      })
+      .finally(() => setIsSyncing(false));
+
+    return optimisticLog;
   };
 
   // Register a new staff student
