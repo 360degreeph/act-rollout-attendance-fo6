@@ -21,6 +21,16 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('act_auth_token') === 'verified';
   });
+  
+  const [globalToast, setGlobalToast] = useState<{
+    show: boolean;
+    studentId: string;
+    studentName: string;
+    status: 'IN' | 'OUT';
+    timestamp: string;
+    position?: string;
+    office?: string;
+  } | null>(null);
 
   // Live Clock
   useEffect(() => {
@@ -109,12 +119,85 @@ function App() {
     }
   };
 
-  // Trigger quick scan from dashboard roster list
+  // Trigger quick scan from dashboard roster list or RFID input
   const handleQuickScan = async (studentId: string) => {
     try {
-      await handleScanSuccess(studentId);
+      const log = await handleScanSuccess(studentId);
+      if (log) {
+        playBeep(log.status);
+        setGlobalToast({
+          show: true,
+          studentId: log.studentId,
+          studentName: log.studentName,
+          status: log.status,
+          timestamp: new Date(log.timestamp).toLocaleTimeString([], { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          position: log.position,
+          office: log.office
+        });
+        
+        setTimeout(() => {
+          setGlobalToast(prev => prev && prev.studentId === log.studentId ? { ...prev, show: false } : prev);
+        }, 2000);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Audio Synthesizer Beep (Pure Web Audio API)
+  const playBeep = (status: 'IN' | 'OUT') => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      if (status === 'IN') {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); // High pitch
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        oscillator.stop(audioCtx.currentTime + 0.15);
+        
+        setTimeout(() => {
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(800, audioCtx.currentTime);
+          gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          osc2.start();
+          gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+          osc2.stop(audioCtx.currentTime + 0.15);
+        }, 100);
+      } else {
+        // Lower pitch double beep for OUT
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        oscillator.stop(audioCtx.currentTime + 0.2);
+        
+        setTimeout(() => {
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(300, audioCtx.currentTime);
+          gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          osc2.start();
+          gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+          osc2.stop(audioCtx.currentTime + 0.3);
+        }, 150);
+      }
+    } catch (e) {
+      // Audio not supported or blocked, ignore
     }
   };
 
@@ -303,6 +386,36 @@ function App() {
           )}
         </div>
       </main>
+
+      {/* Global Toast Notification for RFID / Quick Scans */}
+      {globalToast && globalToast.show && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          background: globalToast.status === 'IN' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)',
+          border: `1px solid ${globalToast.status === 'IN' ? '#34d399' : '#f87171'}`,
+          color: 'white',
+          padding: '1rem',
+          borderRadius: '12px',
+          boxShadow: globalToast.status === 'IN' ? '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          minWidth: '300px',
+          transition: 'all 0.3s ease-out'
+        }}>
+          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '50%' }}>
+            <UserCheck size={28} color="white" />
+          </div>
+          <div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{globalToast.status === 'IN' ? 'LOGGED IN' : 'LOGGED OUT'}</div>
+            <div style={{ fontWeight: 600 }}>{globalToast.studentName}</div>
+            <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>{globalToast.timestamp} • {globalToast.office || globalToast.position || 'Staff'}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
