@@ -83,12 +83,12 @@ function App() {
       (s.rfid && s.rfid.toLowerCase() === scanLower)
     );
 
-    const staffId = existingStudent ? existingStudent.studentId : cleanId;
-    const staffName = existingStudent ? existingStudent.name : `Staff (${cleanId})`;
-    const position = existingStudent ? existingStudent.position : 'Auto-Registered';
-    const sex = existingStudent ? existingStudent.sex : 'Unknown';
-    const office = existingStudent ? existingStudent.office : 'Office';
-    const qrcode = existingStudent ? existingStudent.qrcode : cleanId;
+    const staffId = existingStudent?.studentId || cleanId;
+    const staffName = existingStudent?.name || `Staff (${cleanId})`;
+    const position = existingStudent?.position || 'Auto-Registered';
+    const sex = existingStudent?.sex || 'Unknown';
+    const office = existingStudent?.office || 'Office';
+    const qrcode = existingStudent?.qrcode || cleanId;
 
     // 2. Determine IN/OUT optimistically
     const todayManila = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
