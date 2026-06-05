@@ -291,6 +291,7 @@ function App() {
 
           {currentPage === 'settings' && (
             <Settings
+              students={students}
               syncMode={syncMode}
               setSyncMode={setSyncMode}
               scriptUrl={scriptUrl}

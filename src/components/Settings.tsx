@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link2, Sparkles, AlertCircle, HelpCircle, Check, Database, Trash2, PlusCircle, RefreshCw } from 'lucide-react';
+import { Link2, Sparkles, AlertCircle, HelpCircle, Check, Database, Trash2, PlusCircle, RefreshCw, Search } from 'lucide-react';
 import { SheetsService, type Student } from '../services/sheetsService';
 
 interface SettingsProps {
+  students: Student[];
   syncMode: 'simulation' | 'sheets';
   setSyncMode: (mode: 'simulation' | 'sheets') => void;
   scriptUrl: string;
@@ -13,6 +14,7 @@ interface SettingsProps {
 }
 
 export const Settings: React.FC<SettingsProps> = ({
+  students,
   syncMode,
   setSyncMode,
   scriptUrl,
@@ -36,6 +38,13 @@ export const Settings: React.FC<SettingsProps> = ({
   const [stdOffice, setStdOffice] = useState('');
   const [stdRfid, setStdRfid] = useState('');
   const [regStatus, setRegStatus] = useState<{ success: boolean; message: string } | null>(null);
+  
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Filter matching students for auto-fill dropdown
+  const matchingStudents = stdName.trim()
+    ? students.filter(s => s.name.toLowerCase().includes(stdName.toLowerCase()) && s.name !== stdName)
+    : [];
 
   // Instructions Expand
   const [showGuide, setShowGuide] = useState(false);
@@ -330,16 +339,70 @@ export const Settings: React.FC<SettingsProps> = ({
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Full Name *</label>
-            <input
-              type="text"
-              placeholder="e.g. Sarah Connor"
-              className="form-input"
-              value={stdName}
-              onChange={(e) => setStdName(e.target.value)}
-              required
-            />
+          <div className="form-group" style={{ position: 'relative' }}>
+            <label className="form-label">Search Staff Name to Auto-Fill *</label>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+              <input
+                type="text"
+                placeholder="e.g. Sarah Connor"
+                className="form-input"
+                value={stdName}
+                onChange={(e) => {
+                  setStdName(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                required
+                style={{ paddingLeft: '2.5rem' }}
+              />
+            </div>
+
+            {/* Dropdown Results */}
+            {showDropdown && matchingStudents.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: '#1f2937',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                marginTop: '4px',
+                zIndex: 10,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
+              }}>
+                {matchingStudents.map(student => (
+                  <div
+                    key={student.studentId}
+                    onClick={() => {
+                      setStdId(student.studentId);
+                      setStdName(student.name);
+                      setStdPosition(student.position || '');
+                      setStdSex(student.sex || '');
+                      setStdOffice(student.office || '');
+                      setStdRfid(student.rfid || '');
+                      setShowDropdown(false);
+                    }}
+                    style={{
+                      padding: '0.75rem 1rem',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span style={{ fontWeight: 600, color: '#fff' }}>{student.name}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>{student.studentId} • {student.office || 'No office'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="form-group">
