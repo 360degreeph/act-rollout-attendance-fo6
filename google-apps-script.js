@@ -234,17 +234,29 @@ function doPost(e) {
       var logsData = logsSheet.getDataRange().getValues();
       var lastStatus = "OUT"; // Default to check-in if no previous scans
       
+      var timestamp = new Date();
+      var currentManilaDate = Utilities.formatDate(timestamp, "Asia/Manila", "yyyy-MM-dd");
+      
       // Find the last scan for this staff in logs to toggle status (IN -> OUT -> IN)
       for (var j = logsData.length - 1; j >= 1; j--) {
         var loggedId = logsData[j][logColMap.staffId - 1] ? logsData[j][logColMap.staffId - 1].toString().trim() : "";
         if (loggedId.toLowerCase() === staffId.toLowerCase()) {
-          lastStatus = logsData[j][logColMap.status - 1] ? logsData[j][logColMap.status - 1].toString().trim() : "OUT";
+          var lastLogTimestamp = logsData[j][logColMap.timestamp - 1];
+          
+          // Only toggle status if the last scan was from TODAY. If yesterday, ignore it (default to OUT).
+          if (lastLogTimestamp instanceof Date || !isNaN(new Date(lastLogTimestamp))) {
+            var dateObj = (lastLogTimestamp instanceof Date) ? lastLogTimestamp : new Date(lastLogTimestamp);
+            var lastLogDate = Utilities.formatDate(dateObj, "Asia/Manila", "yyyy-MM-dd");
+            
+            if (lastLogDate === currentManilaDate) {
+              lastStatus = logsData[j][logColMap.status - 1] ? logsData[j][logColMap.status - 1].toString().trim() : "OUT";
+            }
+          }
           break;
         }
       }
       
       var newStatus = (lastStatus === "IN") ? "OUT" : "IN";
-      var timestamp = new Date();
       
       // Append new scan log to logs sheet matching custom headers TIMESTAMP, STAFFID, STATUS
       var logRecord = [];
