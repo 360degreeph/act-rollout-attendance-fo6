@@ -130,8 +130,8 @@ export class SheetsService {
   }
 
   // Get Google Apps Script Web App URL
-  static getScriptUrl(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.SCRIPT_URL);
+  static getScriptUrl(): string {
+    return localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || 'https://script.google.com/macros/s/AKfycbwxFQZWF1Bg_QylSS0sfXwQPxl5dezNFboHDoQZDLPP3XJgH_kF6kEZlrL-diN46Yuf/exec';
   }
 
   static setScriptUrl(url: string) {
